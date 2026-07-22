@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs">
-  <img src="https://img.shields.io/badge/platform-linux%20|%20macOS-lightgrey">
+  <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20Windows-lightgrey">
 </p>
 
 ---
@@ -52,7 +52,7 @@
 | Software | Version | Notes |
 |----------|---------|-------|
 | **Node.js** | v18+ | ES Modules support (`import`) |
-| **OS** | Linux / macOS | |
+| **OS** | Linux / macOS / Windows | |
 
 ### For XAMPP to work fully
 | Software | Description |
