@@ -1,0 +1,27 @@
+{
+  "name": "xampp-cli-mng",
+  "version": "1.0.0",
+  "description": "XAMPP CLI Manager - Terminal-based XAMPP control panel",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "xampp": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IKInecro/xampp-cli-mng.git"
+  },
+  "keywords": [
+    "xampp",
+    "cli",
+    "manager",
+    "terminal",
+    "tui",
+    "apache",
+    "mysql",
+    "php",
+    "phpmyadmin"
+  ],
+  "author": "IKInecro",
+  "license": "MIT"
+}
