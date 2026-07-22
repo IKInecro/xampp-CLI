@@ -10,9 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs">
-  <img src="https://img.shields.io/badge/license-MIT-blue">
   <img src="https://img.shields.io/badge/platform-linux%20|%20macOS-lightgrey">
-  <img src="https://img.shields.io/badge/dependencies-0-brightgreen">
 </p>
 
 ---
@@ -20,8 +18,7 @@
 ## 📋 Table of Contents
 
 - [Features](#-features)
-- [Screenshot](#-screenshot)
-- [System Requirements](#-system-requirements)
+- [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Key Bindings](#-key-bindings)
@@ -29,7 +26,6 @@
 - [Project Structure](#-project-structure)
 - [Configuration](#-configuration)
 - [Troubleshooting](#-troubleshooting)
-- [License](#-license)
 
 ---
 
@@ -47,35 +43,37 @@
 | **Quick Open** | Quick access to phpMyAdmin, htdocs, XAMPP folder, Apache log, MySQL log |
 | **Log Viewer** | Real-time action history with timestamps |
 | **Persistence** | Configuration saved automatically to `~/.config/xampp-cli.json` |
-| **Zero Dependencies** | Uses only Node.js built-in modules |
 
 ---
 
-## 🖼️ Screenshot
+## 🔧 Prerequisites
 
-<p align="center">
-  <img src="asset/imange.png" alt="Dashboard Screenshot" width="700">
-</p>
-
----
-
-## 🔧 System Requirements
-
-### Required
-| Software | Minimum | Notes |
+### To run this tool
+| Software | Version | Notes |
 |----------|---------|-------|
 | **Node.js** | v18+ | ES Modules support (`import`) |
-| **OS** | Linux / macOS | XAMPP or Apache2+MariaDB installed |
+| **OS** | Linux / macOS | |
 
-### Optional (for specific features)
-| Software | Used for |
-|----------|----------|
+### For XAMPP to work fully
+| Software | Description |
+|----------|-------------|
+| **Apache** | Web server (bundled with XAMPP or native via systemd) |
+| **PHP** | Scripting language — handle `.php` files in htdocs |
+| **MySQL / MariaDB** | Database server — required for Database Browser & phpMyAdmin |
+| **phpMyAdmin** | Web-based DB manager — bundled with XAMPP, accessed via `http://localhost/phpmyadmin` |
+| **FTP (ProFTPD)** | File transfer server — optional, bundled with XAMPP |
+| **OpenSSL** | SSL/TLS certificates — for HTTPS support |
+
+> **Tip:** Install [XAMPP](https://www.apachefriends.org/) once and it bundles Apache + PHP + MySQL + phpMyAdmin + ProFTPD automatically. This tool controls all of them from your terminal.
+
+### Optional CLI tools
+| Tool | Used for |
+|------|----------|
 | `sudo` | Running start/stop/restart service commands |
 | `nano` / `vi` | Editing configuration files |
-| `mysql` (CLI) | Listing databases and sizes |
-| `openssl` | Checking SSL certificate info |
+| `mysql` | Listing databases and sizes (alternative) |
 | `ss` (iproute2) | Checking port usage |
-| `hostname -I` | Detecting local IP |
+| `hostname -I` | Detecting local IP address |
 
 ---
 
@@ -84,8 +82,8 @@
 ### 1. Clone or download
 
 ```bash
-git clone https://github.com/IKInecro/xampp-cli-mng.git
-cd xampp-cli-mng
+git clone https://github.com/IKInecro/xampp-CLI.git
+cd xampp-CLI
 ```
 
 ### 2. Install globally (optional)
@@ -285,12 +283,6 @@ Configuration is saved at `~/.config/xampp-cli.json`:
 ### Terminal display broken
 - The app automatically cleans up on exit (Ctrl+C / Q)
 - If force-closed, run `reset` in your terminal
-
----
-
-## 📄 License
-
-MIT License — free to use, modify, and distribute.
 
 ---
 
