@@ -5,13 +5,15 @@
 <h1 align="center">🖥️ XAMPP CLI Manager</h1>
 
 <p align="center">
-  <b>Interactive terminal-based XAMPP control panel — lightweight, zero external dependencies.</b>
+  <b>Interactive terminal-based XAMPP control panel — lightweight, zero external dependencies, built for low-spec machines.</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs">
   <img src="https://img.shields.io/badge/platform-linux%20|%20macOS%20|%20Windows-lightgrey">
 </p>
+
+> 💻 **Made for low-spec machines.** XAMPP's GUI (Control Panel) is heavy and laggy on old hardware. This CLI tool gives you full control directly from the terminal — no GUI overhead, no lag, no bloat. Just a lightweight TUI that runs on anything.
 
 ---
 
