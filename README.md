@@ -46,32 +46,43 @@
 
 ---
 
+> ⚠️ **Important:** This tool is a **manager / control panel** for XAMPP, not a replacement. XAMPP must be installed on your system first.
+
 ## 🔧 Prerequisites
 
-### To run this tool
+### 1. XAMPP (wajib / required)
+
+Download and install XAMPP from the official site:
+
+👉 **[https://www.apachefriends.org/](https://www.apachefriends.org/)**
+
+XAMPP bundles everything you need:
+
+| Component | Version (bundled) | Description |
+|-----------|------------------|-------------|
+| **Apache** | 2.4.x | Web server |
+| **PHP** | 8.x | Scripting language — without PHP, `.php` projects won't run |
+| **MySQL / MariaDB** | 10.x / 8.x | Database server |
+| **phpMyAdmin** | latest | Web-based database manager |
+| **ProFTPD** | latest | FTP server (optional) |
+| **OpenSSL** | latest | SSL/TLS for HTTPS |
+
+> Without XAMPP (or Apache2+PHP+MySQL installed natively), this tool cannot start any services.
+
+### 2. Node.js (to run this tool)
+
 | Software | Version | Notes |
 |----------|---------|-------|
 | **Node.js** | v18+ | ES Modules support (`import`) |
 | **OS** | Linux / macOS / Windows | |
 
-### For XAMPP to work fully
-| Software | Description |
-|----------|-------------|
-| **Apache** | Web server (bundled with XAMPP or native via systemd) |
-| **PHP** | Scripting language — handle `.php` files in htdocs |
-| **MySQL / MariaDB** | Database server — required for Database Browser & phpMyAdmin |
-| **phpMyAdmin** | Web-based DB manager — bundled with XAMPP, accessed via `http://localhost/phpmyadmin` |
-| **FTP (ProFTPD)** | File transfer server — optional, bundled with XAMPP |
-| **OpenSSL** | SSL/TLS certificates — for HTTPS support |
+### 3. Optional CLI tools
 
-> **Tip:** Install [XAMPP](https://www.apachefriends.org/) once and it bundles Apache + PHP + MySQL + phpMyAdmin + ProFTPD automatically. This tool controls all of them from your terminal.
-
-### Optional CLI tools
 | Tool | Used for |
 |------|----------|
-| `sudo` | Running start/stop/restart service commands |
+| `sudo` (Linux/macOS) | Running start/stop/restart service commands |
 | `nano` / `vi` | Editing configuration files |
-| `mysql` | Listing databases and sizes (alternative) |
+| `mysql` (CLI) | Listing databases and sizes (alternative) |
 | `ss` (iproute2) | Checking port usage |
 | `hostname -I` | Detecting local IP address |
 
