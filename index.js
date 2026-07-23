@@ -650,8 +650,6 @@ function renderConfigView() {
 }
 
 function renderSettingsView() {
-  const cols = Math.max(60, process.stdout.columns || 80);
-
   const out = [];
   out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
   out.push(`${A}┃${R}  ${B}${W}SETTINGS${R}  ${Dim}(Esc back)${R}`);
@@ -661,24 +659,23 @@ function renderSettingsView() {
   const modeLabel = state.svcMode === 'systemd' ? 'Systemd (Apache2/MariaDB)' : state.svcMode === 'xampp' ? `XAMPP (${state.xamppDir})` : 'Not detected';
 
   // Info panel
-  out.push(` ${Dim}┏━ Info ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${'━'.repeat(Math.max(0, cols - 58))}┓${R}`);
-  out.push(` ${Dim}┃${R}  ${B}Mode:${R}   ${A}${modeLabel}${' '.repeat(Math.max(1, cols - 56 - strip(modeLabel).length))}${Dim}┃${R}`);
+  out.push(` ${Dim}┏━ Info ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  const infoPad = (v) => ' '.repeat(Math.max(0, 51 - strip(v).length));
+  out.push(` ${Dim}┃${R}  ${B}Mode:${R}   ${A}${modeLabel}${infoPad(modeLabel)}${Dim}┃${R}`);
   const htd = state.htdocsDir || '(not set)';
-  out.push(` ${Dim}┃${R}  ${B}htdocs:${R} ${Dim}${htd}${' '.repeat(Math.max(1, cols - 56 - strip(htd).length))}${Dim}┃${R}`);
+  out.push(` ${Dim}┃${R}  ${B}htdocs:${R} ${Dim}${htd}${infoPad(htd)}${Dim}┃${R}`);
   const src = state.projectSource;
-  out.push(` ${Dim}┃${R}  ${B}Source:${R} ${A}${src}${' '.repeat(Math.max(1, cols - 56 - strip(src).length))}${Dim}┃${R}`);
-  out.push(` ${Dim}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
+  out.push(` ${Dim}┃${R}  ${B}Source:${R} ${A}${src}${infoPad(src)}${Dim}┃${R}`);
+  out.push(` ${Dim}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
-  // Menu items with boxes
+  // Menu items
   const items = [
     { key: '1', label: 'Set XAMPP path', desc: 'Change XAMPP installation directory' },
     { key: '2', label: 'Set Source folder', desc: 'Change project source directory' },
     { key: '3', label: 'Auto-detect services', desc: 'Scan for XAMPP or systemd services' },
   ];
   for (const item of items) {
-    const isActive = state.settingsMode === '' || (item.key === '1' && state.settingsMode === 'xampp') || (item.key === '2' && state.settingsMode === 'source');
-    const hl = state.settingsMode === '' || item.key === '1' && state.settingsMode === 'xampp' || item.key === '2' && state.settingsMode === 'source';
     out.push(` ${C}[${item.key}]${R} ${B}${item.label}${R}`);
     out.push(` ${Dim}   ${item.desc}${R}`);
     out.push('');
@@ -687,10 +684,11 @@ function renderSettingsView() {
   // Input mode
   if (state.settingsMode === 'xampp' || state.settingsMode === 'source') {
     const prompt = state.settingsMode === 'xampp' ? 'XAMPP path' : 'Source folder';
-    out.push(` ${A}┏━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${'━'.repeat(Math.max(0, cols - 56))}┓${R}`);
-    out.push(` ${A}┃${R}  ${C}Enter new ${prompt}:${R}`);
-    out.push(` ${A}┃${R}  ${W}${state.settingsInput}${C}█${R}`);
-    out.push(` ${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
+    const inputPre = `  Enter new ${prompt}:`;
+    out.push(` ${A}┏━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+    out.push(` ${A}┃${R} ${C}${inputPre}${' '.repeat(Math.max(0, 60 - strip(inputPre).length))}${A}┃${R}`);
+    out.push(` ${A}┃${R}  ${W}${state.settingsInput}${C}█${' '.repeat(Math.max(0, 58 - strip(state.settingsInput).length))}${A}┃${R}`);
+    out.push(` ${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
     out.push('');
     out.push(` ${Dim}[Enter]${R} Confirm  ${Dim}[Esc]${R} Cancel`);
   } else {
