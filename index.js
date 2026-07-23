@@ -4,7 +4,6 @@ import { execSync, exec } from 'child_process';
 import { existsSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import { createInterface } from 'readline';
 
 // ─── Constants ───
 const XAMPP_PATHS = ['/opt/lampp','/Applications/XAMPP','/usr/local/lampp','/snap/xampp/current','/opt/xampp'];
@@ -51,37 +50,26 @@ const MaxLog = 100;
 // ─── ANSI ───
 const R = '\x1b[0m';
 const B = '\x1b[1m';
-const D = '\x1b[2m';
-function fg(c) { return `\x1b[38;5;${c}m`; }
-function bg(c) { return `\x1b[48;5;${c}m`; }
-const Orange = () => fg(208);
-const O = Orange();
-const Cyan = () => fg(51);
-const C = fg(51);
-const Green = () => fg(48);
-const G = Green();
-const Red = () => fg(196);
-const RedBg = () => bg(52);
-const Yellow = () => fg(220);
-const Y = Yellow();
-const Blue = () => fg(39);
-const White = () => fg(255);
-const W = White();
-const Gray = () => fg(245);
-const Dim = fg(245);
+const A = '\x1b[38;5;69m';  // Accent (indigo)
+const C = '\x1b[38;5;51m';  // Cyan
+const G = '\x1b[38;5;48m';  // Green
+const Rd = '\x1b[38;5;196m'; // Red
+const Y = '\x1b[38;5;220m';  // Yellow
+const W = '\x1b[38;5;255m'; // White
+const Dim = '\x1b[38;5;245m';
 const Hide = '\x1b[?25l';
 const Show = '\x1b[?25h';
 const Clr = '\x1b[2J';
 const Home = '\x1b[H';
 
-// ─── ASCII Art Header ───
+// ponytail: gradient colors applied per-line for visual depth
 const ASC = [
-  `${Orange()}██╗  ██╗ █████╗ ███╗   ███╗██████╗ ██████╗                ██████╗██╗     ██╗`,
-  `╚██╗██╔╝██╔══██╗████╗ ████║██╔══██╗██╔══██╗              ██╔════╝██║     ██║`,
-  ` ╚███╔╝ ███████║██╔████╔██║██████╔╝██████╔╝    █████╗    ██║     ██║     ██║`,
-  ` ██╔██╗ ██╔══██║██║╚██╔╝██║██╔═══╝ ██╔═══╝     ╚════╝    ██║     ██║     ██║`,
-  `██╔╝ ██╗██║  ██║██║ ╚═╝ ██║██║     ██║                   ╚██████╗███████╗██║`,
-  `╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝     ╚═╝                    ╚═════╝╚══════╝╚═╝`,
+  `${A}██╗  ██╗ █████╗ ███╗   ███╗██████╗ ██████╗                ${C}██████╗██╗     ██╗${R}`,
+  `${A}╚██╗██╔╝██╔══██╗████╗ ████║██╔══██╗██╔══██╗              ${C}██╔════╝██║     ██║${R}`,
+  `${A} ╚███╔╝ ███████║██╔████╔██║██████╔╝██████╔╝    █████╗    ${C}██║     ██║     ██║${R}`,
+  `${C} ██╔██╗ ██╔══██║██║╚██╔╝██║██╔═══╝ ██╔═══╝     ╚════╝    ${A}██║     ██║     ██║${R}`,
+  `${C}██╔╝ ██╗██║  ██║██║ ╚═╝ ██║██║     ██║                   ${A}╚██████╗███████╗██║${R}`,
+  `${C}╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝     ╚═╝                    ${A}╚═════╝╚══════╝╚═╝${R}`,
 ];
 
 function strip(s) { return s.replace(/\x1b\[\d+(;\d+)*m/g, ''); }
@@ -441,16 +429,20 @@ function renderDashboard() {
   for (let i = 0; i < Math.min(3, Math.floor(rows * 0.1)); i++) out.push('');
 
   // ── Header ──
-  const hdrColor = Orange();
   for (let i = 0; i < ASC.length; i++) {
     const line = ASC[i];
     const w = strip(line).length;
     const padAmt = Math.max(0, Math.floor((cols - w) / 2));
-    out.push(hdrColor + ' '.repeat(padAmt) + line + R);
+    out.push(' '.repeat(padAmt) + line);
   }
+  out.push(Dim + '━'.repeat(cols) + R);
 
-  // ── Separator ──
-  out.push(Orange() + '─'.repeat(cols) + R);
+  // ── Status Bar ──
+  const modeLabel = state.svcMode === 'systemd' ? 'systemd' : state.svcMode === 'xampp' ? 'XAMPP' : 'none';
+  const ip = getIp();
+  const statusLine = `${C}◉${R} ${B}${W}${modeLabel}${R}  ${Dim}|${R}  ${C}◉${R} ${Dim}${ip}${R}  ${Dim}|${R}  ${C}◉${R} ${Dim}PHP ${state.phpVersion}${R}`;
+  out.push(statusLine);
+  out.push(Dim + '━'.repeat(cols) + R);
 
   // ── Compute panel widths ──
   let leftW = Math.floor(cols * 0.42);
@@ -469,16 +461,16 @@ function renderDashboard() {
   if (s.xamppFound) {
     for (const sv of svcDefs) {
       const run = s[sv.key];
-      const icon = run ? `${G}●${R}` : `${Red()}○${R}`;
-      const lbl = run ? `${G}Running${R}` : `${Red()}Stopped${R}`;
+      const icon = run ? `${G}●${R}` : `${Rd}○${R}`;
+      const lbl = run ? `${G}Running${R}` : `${Rd}Stopped${R}`;
       svcContent.push(`${icon}  ${B}${sv.name}${R}  ${lbl}  ${Dim}:${sv.port}${R}`);
     }
-    svcContent.push(`${Green()}●${R}  PHP ${state.phpVersion}`);
+    svcContent.push(`${G}●${R}  PHP ${state.phpVersion}`);
     const ssl = state.sslInfo;
     if (ssl && ssl.exists) {
-      svcContent.push(`${Green()}●${R}  SSL ${Dim}(${ssl.expiry || '?'})${R}`);
+      svcContent.push(`${G}●${R}  SSL ${Dim}(${ssl.expiry || '?'})${R}`);
     } else {
-      svcContent.push(`${Red()}○${R}  SSL ${Dim}no cert${R}`);
+      svcContent.push(`${Rd}○${R}  SSL ${Dim}no cert${R}`);
     }
   } else {
     svcContent.push(`${Y}⚠ XAMPP not detected${R}`);
@@ -520,7 +512,7 @@ function renderDashboard() {
   }
 
   // ── Log Panel ──
-  out.push(Orange() + '─'.repeat(cols) + R);
+  out.push(A + '━'.repeat(cols) + R);
   const logH = Math.max(2, Math.floor((rows - out.length - 5) * 0.85));
   const logContent = [];
   const recent = state.logs.slice(-(logH - 2));
@@ -535,12 +527,12 @@ function renderDashboard() {
   const logPane = pane('LOGS', logContent, cols);
   out.push(...logPane.slice(0, logPane.length));
 
-  // ── Controls Panel ──
-  out.push(Orange() + '─'.repeat(cols) + R);
-  const ctrl1 = ` ${C}[1]${R}StartAll ${C}[2]${R}StopAll ${C}[3]${R}Apache ${C}[4]${R}StopApache ${C}[5]${R}MySQL ${C}[6]${R}StopMySQL ${C}[7]${R}RstApache ${C}[8]${R}RstMySQL ${C}[9]${R}RstAll`;
-   const ctrl2 = ` ${C}[P]${R}Projects ${C}[L]${R}Logs ${C}[C]${R}Config ${C}[S]${R}Settings ${C}[D]${R}DB ${C}[H]${R}VHost ${C}[K]${R}Port ${C}[O]${R}QkOpen ${C}[R]${R}Refresh ${C}[Q]${R}Quit`;
-  const ctrlPane = pane('CONTROLS', [ctrl1, ctrl2], cols);
-  out.push(...ctrlPane);
+  // ── Controls ──
+  out.push(A + '━'.repeat(cols) + R);
+  const ctrl1 = `${C} 1${R}Start ${C}2${R}Stop ${C}3${R}Apache ${C}4${R}StopAp ${C}5${R}MySQL ${C}6${R}StopMy ${C}7${R}RstAp ${C}8${R}RstMy ${C}9${R}Rst`;
+  const ctrl2 = `${C} P${R}Proj ${C}L${R}Logs ${C}C${R}Conf ${C}S${R}Set ${C}D${R}DB ${C}H${R}VHost ${C}K${R}Port ${C}O${R}Open ${C}R${R}Ref ${C}Q${R}Quit`;
+  out.push(` ${Dim}⎡${R} ${ctrl1} ${Dim}⎤${R}`);
+  out.push(` ${Dim}⎣${R} ${ctrl2} ${Dim}⎦${R}`);
 
   // ── Output ──
   process.stdout.write(Clr + Home);
@@ -565,9 +557,9 @@ function renderProjectsView() {
   const h = rows - 4;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}PROJECT MANAGEMENT${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}PROJECT MANAGEMENT${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   // Source projects list
@@ -600,9 +592,9 @@ function renderLogsView() {
   const h = rows - 3;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}LOG VIEWER${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}LOG VIEWER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   const start = Math.max(0, state.logs.length - h + 4);
@@ -639,15 +631,15 @@ function renderConfigView() {
   const configFiles = getConfigFiles();
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}QUICK CONFIG${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}QUICK CONFIG${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   for (let i = 0; i < configFiles.length; i++) {
     const f = configFiles[i];
     const exists = f.path && existsSync(f.path);
-    const icon = exists ? `${G}●${R}` : `${Red()}○${R}`;
+    const icon = exists ? `${G}●${R}` : `${Rd}○${R}`;
     const sel = state.selConfig === i ? `${C}►${R}` : ' ';
     out.push(` ${sel} ${icon} ${i + 1}. ${f.name}  ${Dim}${exists ? f.path : '(not found)'}${R}`);
   }
@@ -661,14 +653,14 @@ function renderSettingsView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}SETTINGS${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}SETTINGS${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
   const modeLabel = state.svcMode === 'systemd' ? 'Systemd (Apache2/MariaDB)' : state.svcMode === 'xampp' ? `XAMPP (${state.xamppDir})` : 'Not detected';
-  out.push(` ${B}Mode:${R}       ${Orange()}${modeLabel}${R}`);
+  out.push(` ${B}Mode:${R}       ${A}${modeLabel}${R}`);
   out.push(` ${B}htdocs:${R}     ${Dim}${state.htdocsDir || '(not set)'}${R}`);
-  out.push(` ${B}Source:${R}     ${Orange()}${state.projectSource}${R}`);
+  out.push(` ${B}Source:${R}     ${A}${state.projectSource}${R}`);
   out.push('');
   out.push(` ${Dim}[1]${R} Set XAMPP path`);
   out.push(` ${Dim}[2]${R} Set Source folder`);
@@ -696,9 +688,9 @@ function renderDbView() {
   const rows = process.stdout.rows || 24;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}DATABASE BROWSER${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}DATABASE BROWSER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   if (state.dbList.length === 0) {
@@ -708,7 +700,7 @@ function renderDbView() {
       const db = state.dbList[i];
       const sel = state.dbSel === i ? `${C}►${R}` : ' ';
       const size = getDbSize(db);
-      out.push(` ${sel} ${Green()}●${R} ${i + 1}. ${db}  ${Dim}${size}${R}`);
+      out.push(` ${sel} ${G}●${R} ${i + 1}. ${db}  ${Dim}${size}${R}`);
     }
   }
   out.push('');
@@ -721,9 +713,9 @@ function renderVhostView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}VIRTUAL HOST MANAGER${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}VIRTUAL HOST MANAGER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   if (state.vhostList.length === 0) {
@@ -732,7 +724,7 @@ function renderVhostView() {
     for (let i = 0; i < state.vhostList.length; i++) {
       const v = state.vhostList[i];
       const sel = state.vhostSel === i ? `${C}►${R}` : ' ';
-      const icon = v.enabled ? `${G}●${R}` : `${Red()}○${R}`;
+      const icon = v.enabled ? `${G}●${R}` : `${Rd}○${R}`;
       out.push(` ${sel} ${icon} ${i + 1}. ${v.domain}  ${Dim}${v.root}${R}`);
     }
   }
@@ -746,15 +738,15 @@ function renderPortView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}PORT CHECKER${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}PORT CHECKER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   out.push(` ${B}${C}Port   Service   Status    PID   Process${R}`);
   out.push(` ${Dim}${'─'.repeat(Math.min(cols - 2, 50))}${R}`);
   for (const p of state.portData) {
-    const icon = p.used ? `${G}● IN USE${R}` : `${Red()}○ FREE${R}`;
+    const icon = p.used ? `${G}● IN USE${R}` : `${Rd}○ FREE${R}`;
     out.push(` ${p.port.padEnd(6)} ${p.service.padEnd(10)} ${pad(icon, 14)} ${p.pid.padEnd(6)} ${Dim}${p.process}${R}`);
   }
   out.push('');
@@ -776,9 +768,9 @@ function renderQuickOpenView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${B}${Orange()}╔════════════════════════════════════════════════════════════╗${R}`);
-  out.push(`${B}${Orange()}║${R}  ${B}${White()}QUICK OPEN${R}  ${Dim}(Esc back)${R}  ${B}${Orange()}║${R}`);
-  out.push(`${B}${Orange()}╚════════════════════════════════════════════════════════════╝${R}`);
+  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
+  out.push(`${A}│${R}  ${B}${W}QUICK OPEN${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
 
   for (let i = 0; i < QUICK_OPEN_ITEMS.length; i++) {
@@ -821,10 +813,6 @@ function render() {
 }
 
 // ─── Input ───
-function editSettings() {
-  render();
-}
-
 function onKey(data) {
   const key = data.toString();
 
