@@ -650,32 +650,51 @@ function renderConfigView() {
 }
 
 function renderSettingsView() {
-  const cols = process.stdout.columns || 80;
+  const cols = Math.max(60, process.stdout.columns || 80);
 
   const out = [];
   out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
   out.push(`${A}│${R}  ${B}${W}SETTINGS${R}  ${Dim}(Esc back)${R}`);
   out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
+
   const modeLabel = state.svcMode === 'systemd' ? 'Systemd (Apache2/MariaDB)' : state.svcMode === 'xampp' ? `XAMPP (${state.xamppDir})` : 'Not detected';
-  out.push(` ${B}Mode:${R}       ${A}${modeLabel}${R}`);
-  out.push(` ${B}htdocs:${R}     ${Dim}${state.htdocsDir || '(not set)'}${R}`);
-  out.push(` ${B}Source:${R}     ${A}${state.projectSource}${R}`);
+
+  // Info panel
+  out.push(` ${Dim}┌─ Info ─────────────────────────────────────────────${'─'.repeat(Math.max(0, cols - 58))}┐${R}`);
+  out.push(` ${Dim}│${R}  ${B}Mode:${R}   ${A}${modeLabel}${' '.repeat(Math.max(1, cols - 56 - strip(modeLabel).length))}${Dim}│${R}`);
+  const htd = state.htdocsDir || '(not set)';
+  out.push(` ${Dim}│${R}  ${B}htdocs:${R} ${Dim}${htd}${' '.repeat(Math.max(1, cols - 56 - strip(htd).length))}${Dim}│${R}`);
+  const src = state.projectSource;
+  out.push(` ${Dim}│${R}  ${B}Source:${R} ${A}${src}${' '.repeat(Math.max(1, cols - 56 - strip(src).length))}${Dim}│${R}`);
+  out.push(` ${Dim}└──────────────────────────────────────────────────────────────────┘${R}`);
   out.push('');
-  out.push(` ${Dim}[1]${R} Set XAMPP path`);
-  out.push(` ${Dim}[2]${R} Set Source folder`);
-  out.push(` ${Dim}[3]${R} Auto-detect services`);
-  out.push('');
-  if (state.settingsMode === 'xampp') {
-    out.push(` ${C}Enter new XAMPP path:${R}`);
-    out.push(` ${C}${state.settingsInput}█${R}`);
-    out.push(` ${Dim}[Enter] confirm  [Esc] cancel${R}`);
-  } else if (state.settingsMode === 'source') {
-    out.push(` ${C}Enter new source folder:${R}`);
-    out.push(` ${C}${state.settingsInput}█${R}`);
-    out.push(` ${Dim}[Enter] confirm  [Esc] cancel${R}`);
+
+  // Menu items with boxes
+  const items = [
+    { key: '1', label: 'Set XAMPP path', desc: 'Change XAMPP installation directory' },
+    { key: '2', label: 'Set Source folder', desc: 'Change project source directory' },
+    { key: '3', label: 'Auto-detect services', desc: 'Scan for XAMPP or systemd services' },
+  ];
+  for (const item of items) {
+    const isActive = state.settingsMode === '' || (item.key === '1' && state.settingsMode === 'xampp') || (item.key === '2' && state.settingsMode === 'source');
+    const hl = state.settingsMode === '' || item.key === '1' && state.settingsMode === 'xampp' || item.key === '2' && state.settingsMode === 'source';
+    out.push(` ${C}[${item.key}]${R} ${B}${item.label}${R}`);
+    out.push(` ${Dim}   ${item.desc}${R}`);
+    out.push('');
+  }
+
+  // Input mode
+  if (state.settingsMode === 'xampp' || state.settingsMode === 'source') {
+    const prompt = state.settingsMode === 'xampp' ? 'XAMPP path' : 'Source folder';
+    out.push(` ${A}┌─ Input ──────────────────────────────────────────────${'─'.repeat(Math.max(0, cols - 56))}┐${R}`);
+    out.push(` ${A}│${R}  ${C}Enter new ${prompt}:${R}`);
+    out.push(` ${A}│${R}  ${W}${state.settingsInput}${C}█${R}`);
+    out.push(` ${A}└──────────────────────────────────────────────────────────────────┘${R}`);
+    out.push('');
+    out.push(` ${Dim}[Enter]${R} Confirm  ${Dim}[Esc]${R} Cancel`);
   } else {
-    out.push(` ${Dim}[Esc] Back to dashboard${R}`);
+    out.push(` ${Dim}[Esc]${R} Back to dashboard`);
   }
 
   process.stdout.write(Clr + Home + out.join('\n'));
