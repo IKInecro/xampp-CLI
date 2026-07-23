@@ -397,14 +397,14 @@ function checkPort(port) {
 
 function pane(title, lines, w) {
   const r = [];
-  const t = title ? `─ ${title} ` : '';
+  const t = title ? `━ ${title} ` : '';
   const tl = strip(t).length;
-  r.push(`${C}╭${t}${'─'.repeat(Math.max(1, w - tl - 2))}╮${R}`);
+  r.push(`${C}┏${t}${'━'.repeat(Math.max(1, w - tl - 2))}┓${R}`);
   for (const l of lines) {
     const cl = strip(l).length;
-    r.push(`${C}│${R} ${l}${' '.repeat(Math.max(0, w - cl - 3))}${C}│${R}`);
+    r.push(`${C}┃${R} ${l}${' '.repeat(Math.max(0, w - cl - 3))}${C}┃${R}`);
   }
-  r.push(`${C}╰${'─'.repeat(w - 2)}╯${R}`);
+  r.push(`${C}┗${'━'.repeat(w - 2)}┛${R}`);
   return r;
 }
 
@@ -557,9 +557,9 @@ function renderProjectsView() {
   const h = rows - 4;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}PROJECT MANAGEMENT${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}PROJECT MANAGEMENT${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   // Source projects list
@@ -592,9 +592,9 @@ function renderLogsView() {
   const h = rows - 3;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}LOG VIEWER${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}LOG VIEWER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   const start = Math.max(0, state.logs.length - h + 4);
@@ -631,9 +631,9 @@ function renderConfigView() {
   const configFiles = getConfigFiles();
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}QUICK CONFIG${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}QUICK CONFIG${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   for (let i = 0; i < configFiles.length; i++) {
@@ -653,21 +653,21 @@ function renderSettingsView() {
   const cols = Math.max(60, process.stdout.columns || 80);
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}SETTINGS${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}SETTINGS${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   const modeLabel = state.svcMode === 'systemd' ? 'Systemd (Apache2/MariaDB)' : state.svcMode === 'xampp' ? `XAMPP (${state.xamppDir})` : 'Not detected';
 
   // Info panel
-  out.push(` ${Dim}┌─ Info ─────────────────────────────────────────────${'─'.repeat(Math.max(0, cols - 58))}┐${R}`);
-  out.push(` ${Dim}│${R}  ${B}Mode:${R}   ${A}${modeLabel}${' '.repeat(Math.max(1, cols - 56 - strip(modeLabel).length))}${Dim}│${R}`);
+  out.push(` ${Dim}┏━ Info ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${'━'.repeat(Math.max(0, cols - 58))}┓${R}`);
+  out.push(` ${Dim}┃${R}  ${B}Mode:${R}   ${A}${modeLabel}${' '.repeat(Math.max(1, cols - 56 - strip(modeLabel).length))}${Dim}┃${R}`);
   const htd = state.htdocsDir || '(not set)';
-  out.push(` ${Dim}│${R}  ${B}htdocs:${R} ${Dim}${htd}${' '.repeat(Math.max(1, cols - 56 - strip(htd).length))}${Dim}│${R}`);
+  out.push(` ${Dim}┃${R}  ${B}htdocs:${R} ${Dim}${htd}${' '.repeat(Math.max(1, cols - 56 - strip(htd).length))}${Dim}┃${R}`);
   const src = state.projectSource;
-  out.push(` ${Dim}│${R}  ${B}Source:${R} ${A}${src}${' '.repeat(Math.max(1, cols - 56 - strip(src).length))}${Dim}│${R}`);
-  out.push(` ${Dim}└──────────────────────────────────────────────────────────────────┘${R}`);
+  out.push(` ${Dim}┃${R}  ${B}Source:${R} ${A}${src}${' '.repeat(Math.max(1, cols - 56 - strip(src).length))}${Dim}┃${R}`);
+  out.push(` ${Dim}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   // Menu items with boxes
@@ -687,10 +687,10 @@ function renderSettingsView() {
   // Input mode
   if (state.settingsMode === 'xampp' || state.settingsMode === 'source') {
     const prompt = state.settingsMode === 'xampp' ? 'XAMPP path' : 'Source folder';
-    out.push(` ${A}┌─ Input ──────────────────────────────────────────────${'─'.repeat(Math.max(0, cols - 56))}┐${R}`);
-    out.push(` ${A}│${R}  ${C}Enter new ${prompt}:${R}`);
-    out.push(` ${A}│${R}  ${W}${state.settingsInput}${C}█${R}`);
-    out.push(` ${A}└──────────────────────────────────────────────────────────────────┘${R}`);
+    out.push(` ${A}┏━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${'━'.repeat(Math.max(0, cols - 56))}┓${R}`);
+    out.push(` ${A}┃${R}  ${C}Enter new ${prompt}:${R}`);
+    out.push(` ${A}┃${R}  ${W}${state.settingsInput}${C}█${R}`);
+    out.push(` ${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
     out.push('');
     out.push(` ${Dim}[Enter]${R} Confirm  ${Dim}[Esc]${R} Cancel`);
   } else {
@@ -707,9 +707,9 @@ function renderDbView() {
   const rows = process.stdout.rows || 24;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}DATABASE BROWSER${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}DATABASE BROWSER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   if (state.dbList.length === 0) {
@@ -732,9 +732,9 @@ function renderVhostView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}VIRTUAL HOST MANAGER${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}VIRTUAL HOST MANAGER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   if (state.vhostList.length === 0) {
@@ -757,9 +757,9 @@ function renderPortView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}PORT CHECKER${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}PORT CHECKER${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   out.push(` ${B}${C}Port   Service   Status    PID   Process${R}`);
@@ -787,9 +787,9 @@ function renderQuickOpenView() {
   const cols = process.stdout.columns || 80;
 
   const out = [];
-  out.push(`${A}┌─────────────────────────────────────────────────────────────┐${R}`);
-  out.push(`${A}│${R}  ${B}${W}QUICK OPEN${R}  ${Dim}(Esc back)${R}`);
-  out.push(`${A}└─────────────────────────────────────────────────────────────┘${R}`);
+  out.push(`${A}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${R}`);
+  out.push(`${A}┃${R}  ${B}${W}QUICK OPEN${R}  ${Dim}(Esc back)${R}`);
+  out.push(`${A}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${R}`);
   out.push('');
 
   for (let i = 0; i < QUICK_OPEN_ITEMS.length; i++) {
