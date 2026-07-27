@@ -50,8 +50,8 @@ const MaxLog = 100;
 // ─── ANSI ───
 const R = '\x1b[0m';
 const B = '\x1b[1m';
-const A = '\x1b[38;5;69m';  // Accent (indigo)
-const C = '\x1b[38;5;51m';  // Cyan
+const A = '\x1b[38;5;166m';  // Accent (dark orange)
+const C = '\x1b[38;5;208m';  // Orange
 const G = '\x1b[38;5;48m';  // Green
 const Rd = '\x1b[38;5;196m'; // Red
 const Y = '\x1b[38;5;220m';  // Yellow
