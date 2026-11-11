@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { execSync, exec } from 'child_process';
-import { existsSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, accessSync, constants, realpathSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { pathToFileURL, fileURLToPath } from 'url';
 
 // ─── Constants ───
 const XAMPP_PATHS = ['/opt/lampp','/Applications/XAMPP','/usr/local/lampp','/snap/xampp/current','/opt/xampp'];
@@ -235,7 +236,7 @@ function execSvcAsync(action, service) {
             }
           }
           if (!service || service === 'mysql') {
-            addLog(`MySQL port 3306  user: marco / root`);
+            addLog(`MySQL port 3306  user: ${process.env.USER || 'mysql'} / root`);
           }
         }
         render();
@@ -273,6 +274,12 @@ function getHtdocsProjects() {
   } catch { return []; }
 }
 
+// htdocs may be user-writable already; only escalate to sudo when it isn't
+function htdocsNeedsSudo() {
+  if (state.svcMode !== 'systemd') return false;
+  try { accessSync(state.htdocsDir, constants.W_OK); return false; } catch { return true; }
+}
+
 function doCopyProject(name) {
   if (!state.htdocsDir) return 'HTDOCS_DIR not set';
   const src = join(state.projectSource, name);
@@ -280,7 +287,7 @@ function doCopyProject(name) {
   if (!existsSync(src)) return `Folder ${name} not found`;
   if (existsSync(dest)) return `${name} already exists in htdocs`;
   try {
-    const sudoPrefix = state.svcMode === 'systemd' ? 'sudo ' : '';
+    const sudoPrefix = htdocsNeedsSudo() ? 'sudo ' : '';
     execSync(`${sudoPrefix}cp -r "${src}" "${dest}"`, { timeout: 30000 });
     addLog(`Copy ${name} → htdocs`); return `✓ ${name} copied`;
   } catch (e) { return `Failed: ${e.message}`; }
@@ -293,18 +300,18 @@ function doLinkProject(name) {
   if (!existsSync(src)) return `Folder ${name} not found`;
   if (existsSync(dest)) return `${name} already exists in htdocs`;
   try {
-    const sudoPrefix = state.svcMode === 'systemd' ? 'sudo ' : '';
+    const sudoPrefix = htdocsNeedsSudo() ? 'sudo ' : '';
     execSync(`${sudoPrefix}ln -s "${src}" "${dest}"`, { timeout: 30000 });
     addLog(`Symlink ${name} → htdocs`); return `✓ ${name} linked`;
   } catch (e) { return `Failed: ${e.message}`; }
 }
 
 function doRemoveProject(name) {
-  if (!state.htdocsDir) return 'HTDOCS_DIR not set';
+  if (!state.htdocsDir) return `${name} not in htdocs`;
   const dest = join(state.htdocsDir, name);
   if (!existsSync(dest)) return `${name} not in htdocs`;
   try {
-    const sudoPrefix = state.svcMode === 'systemd' ? 'sudo ' : '';
+    const sudoPrefix = htdocsNeedsSudo() ? 'sudo ' : '';
     execSync(`${sudoPrefix}rm -rf "${dest}"`, { timeout: 30000 });
     addLog(`Remove ${name} from htdocs`); return `✓ ${name} removed`;
   } catch (e) { return `Failed: ${e.message}`; }
@@ -314,6 +321,12 @@ function doRemoveProject(name) {
 
 function getPhpVersion() {
   try {
+    // systemd mode: report the PHP that Apache actually loads, not the CLI binary
+    if (state.svcMode === 'systemd') {
+      const ini = findPhpIni();
+      const m = ini.match(/\/etc\/php\/([\d.]+)\//);
+      if (m) return m[1];
+    }
     const out = execSync('php -v 2>/dev/null | head -1', { encoding: 'utf8', timeout: 5000 });
     const m = out.match(/PHP\s+([\d.]+)/);
     return m ? m[1] : '?';
@@ -321,9 +334,10 @@ function getPhpVersion() {
 }
 
 function getSslInfo() {
-  if (!state.xamppDir) return { exists: false };
-  const certPath = join(state.xamppDir, 'etc/ssl.crt/server.crt');
-  if (!existsSync(certPath)) return { exists: false };
+  const certPath = state.svcMode === 'systemd'
+    ? '/etc/ssl/certs/ssl-cert-snakeoil.pem'
+    : (state.xamppDir ? join(state.xamppDir, 'etc/ssl.crt/server.crt') : null);
+  if (!certPath || !existsSync(certPath)) return { exists: false };
   try {
     const out = execSync(`openssl x509 -in "${certPath}" -noout -enddate 2>/dev/null`, { encoding: 'utf8', timeout: 5000 });
     const m = out.match(/notAfter=(.*)/);
@@ -353,7 +367,11 @@ function getVhosts() {
     confPaths.push(join(state.xamppDir, 'etc/httpd.conf'));
   }
   if (state.svcMode === 'systemd') {
-    confPaths.push('/etc/apache2/sites-enabled/*');
+    try {
+      for (const f of readdirSync('/etc/apache2/sites-enabled')) {
+        confPaths.push(join('/etc/apache2/sites-enabled', f));
+      }
+    } catch {}
   }
   const entries = [];
   for (const cp of confPaths) {
@@ -383,12 +401,17 @@ function getVhosts() {
 }
 
 function checkPort(port) {
-  try {
-    const out = execSync(`ss -tlnp 2>/dev/null | grep ":${port} "`, { encoding: 'utf8', timeout: 5000 });
-    const pid = (out.match(/pid=(\d+)/) || [])[1];
-    const proc = (out.match(/users:\(\("([^"]+)/) || [])[1] || 'unknown';
-    return { used: true, pid: pid || '-', process: proc };
-  } catch { return { used: false, pid: '-', process: '-' }; }
+  // `ss -p` needs root to see other users' processes (apache2/mariadbd)
+  const cmd = `ss -tlnp 2>/dev/null | grep ":${port} "`;
+  for (const c of [`sudo -n ${cmd}`, cmd]) {
+    try {
+      const out = execSync(c, { encoding: 'utf8', timeout: 5000 });
+      const pid = (out.match(/pid=(\d+)/) || [])[1];
+      const proc = (out.match(/users:\(\("([^"]+)/) || [])[1] || 'unknown';
+      return { used: true, pid: pid || '-', process: proc };
+    } catch {}
+  }
+  return { used: false, pid: '-', process: '-' };
 }
 
 
@@ -608,13 +631,28 @@ function renderLogsView() {
   process.stdout.write(Clr + Home + outStr);
 }
 
+// Ubuntu ships multiple PHP versions; pick the one Apache actually uses
+function findPhpIni() {
+  const dir = '/etc/php';
+  if (!existsSync(dir)) return '';
+  const versions = readdirSync(dir).filter(v => /^\d+\.\d+$/.test(v)).sort((a, b) =>
+    parseFloat(b) - parseFloat(a));
+  for (const v of versions) {
+    const p = join(dir, v, 'apache2', 'php.ini');
+    if (existsSync(p)) return p;
+  }
+  return join(dir, versions[0] || '', 'apache2', 'php.ini');
+}
+
 function getConfigFiles() {
   if (state.svcMode === 'systemd') {
+    const phpIni = findPhpIni();
     return [
       { name: 'apache2.conf', path: '/etc/apache2/apache2.conf' },
       { name: 'ports.conf', path: '/etc/apache2/ports.conf' },
       { name: 'my.cnf', path: '/etc/mysql/my.cnf' },
-      { name: 'php.ini', path: '/etc/php/8.2/apache2/php.ini' },
+      { name: 'php.ini', path: phpIni },
+      { name: 'phpMyAdmin config', path: '/etc/phpmyadmin/config.inc.php' },
     ];
   }
   return [
@@ -1263,4 +1301,12 @@ function main() {
   render();
 }
 
-main();
+// Run only when executed directly (not when imported by the test)
+const isMain = (() => {
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch { return false; }
+})();
+if (isMain) main();
+
+export { findPhpIni, getConfigFiles, state, checkPort };

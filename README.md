@@ -52,7 +52,35 @@
 
 ## 🔧 Prerequisites
 
-### 1. XAMPP (wajib / required)
+### 1. Apache + PHP + MariaDB (wajib / required)
+
+Pick **one** of the two stacks below — the tool auto-detects which one you have.
+
+#### Option A — Native Ubuntu/Debian (systemd mode) ✅ recommended
+
+```bash
+sudo apt install apache2 mariadb-server php libapache2-mod-php php-mysql phpmyadmin
+sudo systemctl enable --now apache2 mariadb
+```
+
+| Component | Package | Notes |
+|-----------|---------|-------|
+| **Apache** | `apache2` | Web server, service `apache2` |
+| **PHP** | `php` + `libapache2-mod-php` | Runs inside Apache via `mod_php` |
+| **MySQL / MariaDB** | `mariadb-server` | Database server, service `mariadb` |
+| **phpMyAdmin** | `phpmyadmin` | Web UI at http://localhost/phpmyadmin |
+
+Grant the tool passwordless sudo for the service commands it runs (otherwise
+start/stop buttons will hang on a password prompt with no TTY):
+
+```bash
+echo 'jawa ALL=(root) NOPASSWD: /usr/bin/systemctl start apache2, /usr/bin/systemctl stop apache2, /usr/bin/systemctl restart apache2, /usr/bin/systemctl status apache2, /usr/bin/systemctl start mariadb, /usr/bin/systemctl stop mariadb, /usr/bin/systemctl restart mariadb, /usr/bin/systemctl status mariadb, /usr/bin/ss -tlnp' \
+  | sudo tee /etc/sudoers.d/xampp-cli
+sudo chmod 440 /etc/sudoers.d/xampp-cli
+sudo visudo -c -f /etc/sudoers.d/xampp-cli
+```
+
+#### Option B — XAMPP (classic mode)
 
 Download and install XAMPP from the official site:
 
@@ -112,6 +140,15 @@ Or run directly:
 ```bash
 node index.js
 ```
+
+### 3. Run the self-check (systemd mode)
+
+```bash
+node test/systemd.test.js
+```
+
+Checks that the PHP version is detected correctly, every config path in the
+Quick Config list actually exists, and the port checker resolves PIDs.
 
 ---
 
@@ -229,6 +266,8 @@ xampp/
 ├── package.json       # Package metadata & binary config
 ├── README.md          # This documentation
 ├── .gitignore         # Git ignore rules
+├── test/
+│   └── systemd.test.js # Self-check for the native Ubuntu stack
 └── asset/
     └── imange.png     # Screenshot for README
 ```
@@ -267,6 +306,17 @@ Configuration is saved at `~/.config/xampp-cli.json`:
 }
 ```
 
+In systemd mode (native Ubuntu stack) it looks like this:
+
+```json
+{
+  "xamppDir": null,
+  "projectSource": "/home/jawa",
+  "htdocsDir": "/var/www/html",
+  "svcMode": "systemd"
+}
+```
+
 ### Adjustable settings via `[S]ettings`:
 1. **Set XAMPP path** — change XAMPP installation location
 2. **Set Source folder** — folder where projects are stored
@@ -282,16 +332,37 @@ Configuration is saved at `~/.config/xampp-cli.json`:
 - Or if using native Apache2/MariaDB, press `[3]` Auto-detect
 
 ### "Permission denied" when starting/stopping services
-- Make sure your user has `sudo` access
-- Run `sudo -v` first to cache sudo credentials
+- The tool runs `sudo systemctl ...` without a TTY, so sudo must be passwordless
+  for those exact commands — see [Option A](#option-a--native-ubuntudebian-systemd-mode-)
+- Verify with `sudo -n systemctl status apache2`
 
 ### MySQL not showing up
 - Make sure MySQL/MariaDB is running
-- If using a root password, run `mysql` first to set up the user
+- The Database Browser runs `mysql -e` as your own user, so your OS user needs a
+  matching MySQL account:
+  ```bash
+  sudo mysql -e "CREATE USER 'jawa'@'localhost' IDENTIFIED VIA unix_socket; GRANT ALL PRIVILEGES ON *.* TO 'jawa'@'localhost'; FLUSH PRIVILEGES;"
+  ```
+
+### phpMyAdmin login rejected
+- Debian/Ubuntu's phpMyAdmin authenticates against MySQL. Sign in with a MySQL
+  user that has a password (e.g. `root` after `sudo mysql`):
+  ```bash
+  sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD('root'); FLUSH PRIVILEGES;"
+  ```
 
 ### Port 80/3306 already in use
 - Use `[K]` Port Checker to see which process is using the port
 - Stop other services using the same port
+
+### Project is 403 Forbidden when symlinked into htdocs
+- Apache (running as `www-data`) can't read your home directory or project
+- Grant access once:
+  ```bash
+  sudo usermod -aG "$USER" www-data
+  sudo chmod g+x "$HOME" "$HOME"/*
+  sudo systemctl restart apache2
+  ```
 
 ### Terminal display broken
 - The app automatically cleans up on exit (Ctrl+C / Q)
